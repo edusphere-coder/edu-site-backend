@@ -27,7 +27,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://edu-site-ftu8-gl98mnlbx-edusphere-coders-projects.vercel.app/"
+      "https://edu-site-ftu8-61an8xh34-edusphere-coders-projects.vercel.app/"
     ],
     methods: ["GET","POST","PUT","DELETE"],
     credentials: true
