@@ -3,71 +3,92 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Create connection pool
+/*
+====================================
+MYSQL CONNECTION POOL
+====================================
+*/
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME, 
+  database: process.env.DB_NAME,
+
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  connectTimeout: 10000,
-  ssl: {
-    rejectUnauthorized: false
-  }
+
+  connectTimeout: 10000
 });
 
-// Initialize database
+/*
+====================================
+INITIALIZE DATABASE (RUN SCHEMA)
+====================================
+*/
+
 const initializeDatabase = async () => {
   let connection;
+
   try {
-    // Connect without database to create it if needed
     connection = await mysql.createConnection({
       host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
+      port: process.env.DB_PORT || 3306,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       multipleStatements: true,
-      allowPublicKeyRetrieval: true,
-      connectTimeout: 10000,
-      ssl: {
-        rejectUnauthorized: false
-      }
+      connectTimeout: 10000
     });
 
-    console.log('Connected to MySQL server');
+    console.log("✅ Connected to MySQL server");
 
-    // Read and execute schema
-    const schemaPath = path.join(__dirname, 'db.schema.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf8');
+    // Read schema file
+    const schemaPath = path.join(__dirname, "db.schema.sql");
+    const schema = fs.readFileSync(schemaPath, "utf8");
 
+    // Execute SQL
     await connection.query(schema);
-    console.log('Database and tables initialized successfully');
+
+    console.log("✅ Database and tables initialized successfully");
 
     await connection.end();
+
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error("❌ Database initialization error:", error);
     if (connection) await connection.end();
     throw error;
   }
 };
 
-// Test connection
+/*
+====================================
+TEST CONNECTION
+====================================
+*/
+
 const testConnection = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('Database connection pool established');
+    console.log("✅ MySQL connection pool established");
     connection.release();
     return true;
   } catch (error) {
-    console.error('Error connecting to database:', error);
+    console.error("❌ Error connecting to database:", error);
     return false;
   }
 };
+
+/*
+====================================
+EXPORT MODULE
+====================================
+*/
 
 module.exports = {
   pool,
