@@ -19,7 +19,7 @@ const contactRoutes = require('./routes/contact');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Security middleware
 app.use(helmet());
 
 // ✅ FIXED CORS
@@ -27,7 +27,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://edu-site-ftu8-61an8xh34-edusphere-coders-projects.vercel.app/"
+      "https://edu-site-ftu8-61an8xh34-edusphere-coders-projects.vercel.app",
+      /\.vercel\.app$/   // allow all Vercel deployments
     ],
     methods: ["GET","POST","PUT","DELETE"],
     credentials: true
@@ -38,7 +39,15 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check route
+// ✅ Root route (important for Render)
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'EduSphere Backend API Running'
+  });
+});
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -80,7 +89,7 @@ const startServer = async () => {
       throw new Error('Failed to connect to database');
     }
 
-    app.listen(PORT, '0.0.0.0', () => {
+    app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🏥 Health Check: /health`);
