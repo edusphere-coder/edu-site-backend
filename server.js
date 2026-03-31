@@ -71,7 +71,7 @@ const startServer = async () => {
             throw new Error('Failed to connect to database');
         }
 
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`\n🚀 Server is running on port ${PORT}`);
             console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
