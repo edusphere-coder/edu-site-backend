@@ -75,12 +75,12 @@ const login = async (req, res, next) => {
         }
 
         // Check if user account is active
-        if (!user.is_active) {
-            return res.status(403).json({
-                success: false,
-                message: 'Your account is pending activation. Please contact the admin team for access.'
-            });
-        }
+       // if (!user.is_active) {
+          //  return res.status(403).json({
+             //   success: false,
+              //  message: 'Your account is pending activation. Please contact the admin team for access.'
+         //   });
+       // }
 
         // Generate token
         const token = generateToken({
