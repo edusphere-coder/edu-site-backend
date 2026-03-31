@@ -15,7 +15,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  allowPublicKeyRetrieval: true,
   connectTimeout: 10000,
   ssl: {
     rejectUnauthorized: false
