@@ -26,9 +26,10 @@ app.use(helmet());
 app.use(
   cors({
     origin: [
-      process.env.FRONTEND_URL || "http://localhost:3000",
+      "http://localhost:3000",
       "https://edu-site-ftu8-five.vercel.app"
     ],
+    methods: ["GET","POST","PUT","DELETE"],
     credentials: true
   })
 );
