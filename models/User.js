@@ -6,100 +6,120 @@ class User {
      * Create a new user
      */
     static async create(userData) {
-        const { first_name, last_name, email, password, phone, address, role = 'student' } = userData;
+        try {
+            const { first_name, last_name, email, password, phone, address, role = 'student' } = userData;
 
-        // Hash password
-        const hashedPassword = await hashPassword(password);
+            // ✅ Validation
+            if (!first_name || !last_name || !email || !password) {
+                throw new Error("All required fields must be provided");
+            }
 
-        const query = `
-      INSERT INTO users (first_name, last_name, email, password, phone, address, role, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, false)
-    `;
+            // ✅ Hash password
+            const hashedPassword = await hashPassword(password);
 
-        const [result] = await pool.execute(query, [
-            first_name,
-            last_name,
-            email,
-            hashedPassword,
-            phone || null,
-            address || null,
-            role
-        ]);
+            const query = `
+                INSERT INTO users 
+                (first_name, last_name, email, password, phone, address, role, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, true)
+            `;
 
-        return result.insertId;
+            const [result] = await pool.execute(query, [
+                first_name,
+                last_name,
+                email,
+                hashedPassword,
+                phone || null,
+                address || null,
+                role
+            ]);
+
+            return result.insertId;
+
+        } catch (error) {
+            console.error("CREATE USER ERROR:", error);
+            throw error;
+        }
     }
 
     /**
      * Find user by email
      */
     static async findByEmail(email) {
-        const query = 'SELECT * FROM users WHERE email = ?';
-        const [rows] = await pool.execute(query, [email]);
-        return rows[0];
+        try {
+            const query = 'SELECT * FROM users WHERE email = ?';
+            const [rows] = await pool.execute(query, [email]);
+            return rows[0];
+        } catch (error) {
+            console.error("FIND BY EMAIL ERROR:", error);
+            throw error;
+        }
     }
 
     /**
      * Find user by ID
      */
     static async findById(id) {
-        const query = 'SELECT id, first_name, last_name, email, phone, address, role, is_active, created_at FROM users WHERE id = ?';
-        const [rows] = await pool.execute(query, [id]);
-        return rows[0];
+        try {
+            const query = `
+                SELECT id, first_name, last_name, email, phone, address, role, is_active, created_at 
+                FROM users WHERE id = ?
+            `;
+            const [rows] = await pool.execute(query, [id]);
+            return rows[0];
+        } catch (error) {
+            console.error("FIND BY ID ERROR:", error);
+            throw error;
+        }
     }
 
     /**
      * Update user
      */
     static async update(id, userData) {
-        const { first_name, last_name, phone, address } = userData;
+        try {
+            const { first_name, last_name, phone, address } = userData;
 
-        const query = `
-      UPDATE users 
-      SET first_name = ?, last_name = ?, phone = ?, address = ?
-      WHERE id = ?
-    `;
+            const query = `
+                UPDATE users 
+                SET first_name = ?, last_name = ?, phone = ?, address = ?
+                WHERE id = ?
+            `;
 
-        const [result] = await pool.execute(query, [
-            first_name,
-            last_name,
-            phone || null,
-            address || null,
-            id
-        ]);
+            const [result] = await pool.execute(query, [
+                first_name,
+                last_name,
+                phone || null,
+                address || null,
+                id
+            ]);
 
-        return result.affectedRows > 0;
-    }
-
-    /**
-     * Update user active status (admin only)
-     */
-    static async updateActiveStatus(id, isActive) {
-        const query = 'UPDATE users SET is_active = ? WHERE id = ?';
-        const [result] = await pool.execute(query, [isActive, id]);
-        return result.affectedRows > 0;
-    }
-
-    /**
-     * Get all inactive users (admin only)
-     */
-    static async getAllInactive() {
-        const query = 'SELECT id, first_name, last_name, email, phone, role, created_at FROM users WHERE is_active = false ORDER BY created_at DESC';
-        const [rows] = await pool.execute(query);
-        return rows;
+            return result.affectedRows > 0;
+        } catch (error) {
+            console.error("UPDATE USER ERROR:", error);
+            throw error;
+        }
     }
 
     /**
      * Verify password
      */
     static async verifyPassword(plainPassword, hashedPassword) {
-        return await comparePassword(plainPassword, hashedPassword);
+        try {
+            return await comparePassword(plainPassword, hashedPassword);
+        } catch (error) {
+            console.error("VERIFY PASSWORD ERROR:", error);
+            throw error;
+        }
     }
 
     /**
-     * Get all users (admin only)
+     * Get all users
      */
     static async getAll() {
-        const query = 'SELECT id, first_name, last_name, email, phone, role, is_active, created_at FROM users';
+        const query = `
+            SELECT id, first_name, last_name, email, phone, role, is_active, created_at 
+            FROM users
+        `;
         const [rows] = await pool.execute(query);
         return rows;
     }
