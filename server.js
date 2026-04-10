@@ -26,6 +26,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: [
+      "https://www.eduspherecourses.in",
       "http://localhost:3000",
       "https://edu-site-ftu8-61an8xh34-edusphere-coders-projects.vercel.app",
       /\.vercel\.app$/   // allow all Vercel deployments
