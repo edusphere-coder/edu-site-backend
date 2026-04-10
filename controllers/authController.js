@@ -45,10 +45,8 @@ const register = async (req, res, next) => {
             data: { user }
         });
     } catch (error) {
-        console.log("LOGIN ERROR:", error);
-    return res.status(500).json({
-        success: false,
-        message: error.message
+        next(error);
+        
     }
 };
 
