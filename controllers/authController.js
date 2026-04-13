@@ -233,6 +233,7 @@ const updateProfile = async (req, res, next) => {
 module.exports = {
     register,
     login,
+    googleSignIn,
     getProfile,
     updateProfile
 };
