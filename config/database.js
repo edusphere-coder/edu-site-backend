@@ -36,17 +36,24 @@ const initializeDatabase = async () => {
   let connection;
 
   try {
+    // First, connect without specifying the database to create it
     connection = await mysql.createConnection({
       host: process.env.DB_HOST,
       port: process.env.DB_PORT || 3306,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
       multipleStatements: true,
       connectTimeout: 10000
     });
 
     console.log("✅ Connected to MySQL server");
+
+    // Create database if it doesn't exist
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
+    console.log(`✅ Database '${process.env.DB_NAME}' created or already exists`);
+
+    // Switch to the database
+    await connection.query(`USE \`${process.env.DB_NAME}\``);
 
     // Read schema file
     const schemaPath = path.join(__dirname, "db.schema.sql");

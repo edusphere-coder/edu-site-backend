@@ -41,7 +41,7 @@ const register = async (req, res, next) => {
 
         res.status(201).json({
             success: true,
-            message: 'Registration successful! Our team will review your account and get back to you soon.',
+            message: 'Registration successful! You can now log in to your account.',
             data: { user }
         });
     } catch (error) {
@@ -76,12 +76,12 @@ const login = async (req, res, next) => {
         }
 
         // Check if user account is active
-       // if (!user.is_active) {
-          //  return res.status(403).json({
-             //   success: false,
-              //  message: 'Your account is pending activation. Please contact the admin team for access.'
-         //   });
-       // }
+        // if (!user.is_active) {
+        //     return res.status(403).json({
+        //         success: false,
+        //         message: 'Your account is pending activation. Please contact the admin team for access.'
+        //     });
+        // }
 
         // Generate token
         const token = generateToken({
