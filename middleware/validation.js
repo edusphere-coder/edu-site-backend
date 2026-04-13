@@ -50,8 +50,8 @@ const validateRegister = [
     body('phone')
         .optional()
         .trim()
-        .matches(/^[0-9]{10}$/)
-        .withMessage('Phone number must be 10 digits'),
+        .matches(/^((\+91|0)?\s?-?\s?)?[6-9]\d{9}$/)
+        .withMessage('Phone number must be 10 digits and may include +91 or 0 prefix'),
 
     body('address')
         .optional()

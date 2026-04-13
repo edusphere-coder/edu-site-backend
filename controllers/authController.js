@@ -1,5 +1,73 @@
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+/**
+ * Sign in with Google
+ */
+const googleSignIn = async (req, res, next) => {
+    try {
+        const { id_token } = req.body;
+
+        if (!id_token) {
+            return res.status(400).json({
+                success: false,
+                message: 'Google id_token is required.'
+            });
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: id_token,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        const email = payload?.email;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid Google token payload.'
+            });
+        }
+
+        let user = await User.findByEmail(email);
+
+        if (!user) {
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            const userId = await User.create({
+                first_name: payload.given_name || 'Google',
+                last_name: payload.family_name || 'User',
+                email,
+                password: randomPassword,
+                phone: null,
+                address: null,
+                role: 'student'
+            });
+            user = await User.findById(userId);
+        }
+
+        const token = generateToken({
+            id: user.id,
+            email: user.email,
+            role: user.role
+        });
+
+        res.json({
+            success: true,
+            message: 'Google login successful',
+            data: {
+                user,
+                token
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 /**
  * Register a new user
