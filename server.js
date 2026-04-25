@@ -66,6 +66,9 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contact', contactRoutes);
 
+// Backward-compatible auth aliases for clients that call /auth/*
+app.use('/auth', authRoutes);
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
