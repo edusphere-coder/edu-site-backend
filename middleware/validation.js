@@ -136,9 +136,26 @@ const validateProfileUpdate = [
     handleValidationErrors
 ];
 
+/**
+ * Validation rules for enrollment by access code
+ */
+const validateEnrollmentAccessCode = [
+    body('access_code')
+        .trim()
+        .notEmpty()
+        .withMessage('Access code is required')
+        .isLength({ min: 6, max: 16 })
+        .withMessage('Access code must be between 6 and 16 characters')
+        .isAlphanumeric()
+        .withMessage('Access code must be alphanumeric only'),
+
+    handleValidationErrors
+];
+
 module.exports = {
     validateRegister,
     validateLogin,
     validateCourse,
-    validateProfileUpdate
+    validateProfileUpdate,
+    validateEnrollmentAccessCode
 };

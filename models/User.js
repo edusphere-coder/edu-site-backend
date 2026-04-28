@@ -1,7 +1,23 @@
 const { pool } = require('../config/database');
 const { hashPassword, comparePassword } = require('../utils/password');
+const crypto = require('crypto');
 
 class User {
+    /**
+     * Generate a random uppercase alphanumeric code.
+     */
+    static generateAccessCode(length = 10) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const bytes = crypto.randomBytes(length);
+        let code = '';
+
+        for (let i = 0; i < length; i += 1) {
+            code += alphabet[bytes[i] % alphabet.length];
+        }
+
+        return code;
+    }
+
     /**
      * Create a new user
      */
@@ -18,22 +34,38 @@ class User {
             const hashedPassword = await hashPassword(password);
 
             const query = `
-                INSERT INTO users 
-                (first_name, last_name, email, password, phone, address, role, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, true)
+                INSERT INTO users
+                (first_name, last_name, email, access_code, password, phone, address, role, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)
             `;
 
-            const [result] = await pool.execute(query, [
-                first_name,
-                last_name,
-                email,
-                hashedPassword,
-                phone || null,
-                address || null,
-                role
-            ]);
+            for (let attempt = 0; attempt < 5; attempt += 1) {
+                const accessCode = User.generateAccessCode();
 
-            return result.insertId;
+                try {
+                    const [result] = await pool.execute(query, [
+                        first_name,
+                        last_name,
+                        email,
+                        accessCode,
+                        hashedPassword,
+                        phone || null,
+                        address || null,
+                        role
+                    ]);
+
+                    return result.insertId;
+                } catch (insertError) {
+                    // Retry only if random access code collides with an existing one.
+                    if (insertError && insertError.code === 'ER_DUP_ENTRY' && String(insertError.sqlMessage || '').includes('access_code')) {
+                        continue;
+                    }
+
+                    throw insertError;
+                }
+            }
+
+            throw new Error('Failed to generate a unique access code for user');
 
         } catch (error) {
             console.error("CREATE USER ERROR:", error);
@@ -61,7 +93,7 @@ class User {
     static async findById(id) {
         try {
             const query = `
-                SELECT id, first_name, last_name, email, phone, address, role, is_active, created_at, updated_at 
+                SELECT id, first_name, last_name, email, access_code, phone, address, role, is_active, created_at, updated_at
                 FROM users WHERE id = ?
             `;
             const [rows] = await pool.execute(query, [id]);
@@ -117,7 +149,7 @@ class User {
      */
     static async getAll() {
         const query = `
-            SELECT id, first_name, last_name, email, phone, role, is_active, created_at 
+            SELECT id, first_name, last_name, email, access_code, phone, role, is_active, created_at
             FROM users
         `;
         const [rows] = await pool.execute(query);

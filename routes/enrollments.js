@@ -8,12 +8,23 @@ const {
     unenrollFromCourse
 } = require('../controllers/enrollmentController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { validateEnrollmentAccessCode } = require('../middleware/validation');
+
+const normalizeEnrollmentPayload = (req, res, next) => {
+    if (req.body && typeof req.body === 'object') {
+        if (req.body.access_code === undefined && req.body.accessCode !== undefined) {
+            req.body.access_code = req.body.accessCode;
+        }
+    }
+
+    next();
+};
 
 // All routes require authentication
 router.use(authenticateToken);
 
 // Student routes
-router.post('/:courseId', enrollInCourse);
+router.post('/:courseId', normalizeEnrollmentPayload, validateEnrollmentAccessCode, enrollInCourse);
 router.get('/my/enrollments', getMyEnrollments);
 router.put('/:courseId/progress', updateProgress);
 router.delete('/:courseId', unenrollFromCourse);

@@ -99,7 +99,7 @@ The server will start on `http://localhost:5000`
 - `DELETE /api/recordings/:id` - Delete recording (instructor/admin)
 
 ### Enrollments
-- `POST /api/enrollments/:courseId` - Enroll in course (protected)
+- `POST /api/enrollments/:courseId` - Enroll in course (protected, requires `access_code` in body)
 - `GET /api/enrollments/my/enrollments` - Get user enrollments (protected)
 - `PUT /api/enrollments/:courseId/progress` - Update progress (protected)
 - `DELETE /api/enrollments/:courseId` - Unenroll from course (protected)

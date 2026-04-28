@@ -49,6 +49,13 @@ class Course {
     }
 
     /**
+     * Backward-compatible alias for controllers using findById.
+     */
+    static async findById(id) {
+        return Course.getById(id);
+    }
+
+    /**
      * Get presentations for a course
      */
     static async getPresentations(courseId) {
