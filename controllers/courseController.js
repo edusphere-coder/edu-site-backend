@@ -22,7 +22,15 @@ const getAllCourses = async (req, res, next) => {
 const getCourseBySlug = async (req, res, next) => {
     try {
         const { slug } = req.params;
-        const course = await Course.getBySlug(slug);
+        let course = await Course.getBySlug(slug);
+
+        // Backward compatibility: some clients pass numeric course IDs to this route.
+        if (!course && /^\d+$/.test(slug)) {
+            course = await Course.getById(Number(slug));
+            if (course && !course.is_published) {
+                course = null;
+            }
+        }
 
         if (!course) {
             return res.status(404).json({
