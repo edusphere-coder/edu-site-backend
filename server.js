@@ -22,17 +22,31 @@ const PORT = process.env.PORT || 5000;
 // Security middleware
 app.use(helmet());
 
-// ✅ FIXED CORS
+// CORS configuration for local dev, production domain variants, and Vercel previews.
+const allowedOrigins = [
+  'https://eduspherecourses.in',
+  'https://www.eduspherecourses.in',
+  'http://localhost:3000',
+  'http://localhost:5173'
+];
+
 app.use(
   cors({
-    origin: [
-      "https://www.eduspherecourses.in",
-      "http://localhost:3000",
-      "https://edu-site-ftu8-61an8xh34-edusphere-coders-projects.vercel.app",
-      /\.vercel\.app$/   // allow all Vercel deployments
-    ],
-    methods: ["GET","POST","PUT","DELETE"],
-    credentials: true
+    origin: (origin, callback) => {
+      // Allow non-browser clients like curl/Postman that do not send Origin.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    optionsSuccessStatus: 204
   })
 );
 
