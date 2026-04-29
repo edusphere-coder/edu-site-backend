@@ -2,6 +2,14 @@ const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const User = require('../models/User');
 
+const resolveCourseFromParam = async (courseParam) => {
+    if (/^\d+$/.test(String(courseParam))) {
+        return Course.findById(Number(courseParam));
+    }
+
+    return Course.getBySlug(courseParam);
+};
+
 /**
  * Enroll in a course
  */
@@ -33,7 +41,7 @@ const enrollInCourse = async (req, res, next) => {
         }
 
         // Check if course exists
-        const course = await Course.findById(courseId);
+        const course = await resolveCourseFromParam(courseId);
         if (!course) {
             return res.status(404).json({
                 success: false,
@@ -42,7 +50,8 @@ const enrollInCourse = async (req, res, next) => {
         }
 
         // Check if already enrolled
-        const isEnrolled = await Enrollment.isEnrolled(req.user.id, courseId);
+        const normalizedCourseId = course.id;
+        const isEnrolled = await Enrollment.isEnrolled(req.user.id, normalizedCourseId);
         if (isEnrolled) {
             return res.status(409).json({
                 success: false,
@@ -51,7 +60,7 @@ const enrollInCourse = async (req, res, next) => {
         }
 
         // Enroll user
-        await Enrollment.create(req.user.id, courseId);
+        await Enrollment.create(req.user.id, normalizedCourseId);
 
         res.status(201).json({
             success: true,
@@ -86,7 +95,7 @@ const getCourseEnrollments = async (req, res, next) => {
         const { courseId } = req.params;
 
         // Check if user is instructor or admin
-        const course = await Course.findById(courseId);
+        const course = await resolveCourseFromParam(courseId);
         if (!course) {
             return res.status(404).json({
                 success: false,
@@ -101,7 +110,7 @@ const getCourseEnrollments = async (req, res, next) => {
             });
         }
 
-        const enrollments = await Enrollment.getByCourse(courseId);
+        const enrollments = await Enrollment.getByCourse(course.id);
 
         res.json({
             success: true,
@@ -128,8 +137,16 @@ const updateProgress = async (req, res, next) => {
             });
         }
 
+        const course = await resolveCourseFromParam(courseId);
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: 'Course not found'
+            });
+        }
+
         // Check if enrolled
-        const isEnrolled = await Enrollment.isEnrolled(req.user.id, courseId);
+        const isEnrolled = await Enrollment.isEnrolled(req.user.id, course.id);
         if (!isEnrolled) {
             return res.status(404).json({
                 success: false,
@@ -137,7 +154,7 @@ const updateProgress = async (req, res, next) => {
             });
         }
 
-        await Enrollment.updateProgress(req.user.id, courseId, progress);
+        await Enrollment.updateProgress(req.user.id, course.id, progress);
 
         res.json({
             success: true,
@@ -155,7 +172,15 @@ const unenrollFromCourse = async (req, res, next) => {
     try {
         const { courseId } = req.params;
 
-        const deleted = await Enrollment.delete(req.user.id, courseId);
+        const course = await resolveCourseFromParam(courseId);
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: 'Course not found'
+            });
+        }
+
+        const deleted = await Enrollment.delete(req.user.id, course.id);
 
         if (!deleted) {
             return res.status(404).json({
