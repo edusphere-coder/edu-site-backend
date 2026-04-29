@@ -2,12 +2,49 @@ const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const User = require('../models/User');
 
+const INVALID_COURSE_PARAM_VALUES = new Set(['', 'undefined', 'null', 'nan']);
+
+const parseSlugFromReferer = (referer) => {
+    if (!referer || typeof referer !== 'string') return null;
+
+    try {
+        const url = new URL(referer);
+        const match = url.pathname.match(/\/courses\/([^/?#]+)/i);
+        return match ? decodeURIComponent(match[1]) : null;
+    } catch (_error) {
+        return null;
+    }
+};
+
 const resolveCourseFromParam = async (courseParam) => {
-    if (/^\d+$/.test(String(courseParam))) {
-        return Course.findById(Number(courseParam));
+    const normalized = String(courseParam || '').trim();
+    if (!normalized || INVALID_COURSE_PARAM_VALUES.has(normalized.toLowerCase())) {
+        return null;
     }
 
-    return Course.getBySlug(courseParam);
+    if (/^\d+$/.test(normalized)) {
+        return Course.findById(Number(normalized));
+    }
+
+    return Course.getBySlug(normalized);
+};
+
+const resolveCourseForEnrollment = async (req) => {
+    const directCourse = await resolveCourseFromParam(req.params.courseId);
+    if (directCourse) return directCourse;
+
+    // Backward compatibility fallback for older clients sending invalid route params.
+    const bodySlug = req.body?.course_slug || req.body?.courseSlug;
+    const headerSlug = req.headers['x-course-slug'];
+    const refererSlug = parseSlugFromReferer(req.headers.referer);
+
+    const candidates = [bodySlug, headerSlug, refererSlug];
+    for (const candidate of candidates) {
+        const resolved = await resolveCourseFromParam(candidate);
+        if (resolved) return resolved;
+    }
+
+    return null;
 };
 
 /**
@@ -40,8 +77,8 @@ const enrollInCourse = async (req, res, next) => {
             });
         }
 
-        // Check if course exists
-        const course = await resolveCourseFromParam(courseId);
+        // Check if course exists (with compatibility fallbacks for invalid params)
+        const course = await resolveCourseForEnrollment(req);
         if (!course) {
             return res.status(404).json({
                 success: false,
