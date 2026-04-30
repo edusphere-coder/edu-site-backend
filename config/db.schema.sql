@@ -107,14 +107,32 @@ CREATE TABLE IF NOT EXISTS enrollments (
 );
 
 -- ============================================
--- SEED COURSES
+-- MIGRATE: fix slug mismatches for existing deployments
+-- (must run BEFORE INSERT IGNORE to avoid duplicate key errors)
+-- ============================================
+
+UPDATE courses SET
+  slug        = 'artificial-intelligence',
+  title       = 'Artificial Intelligence & Machine Learning',
+  description = 'Master AI including supervised and unsupervised learning, neural networks, deep learning, NLP, and Generative AI.',
+  duration    = 2880
+WHERE slug = 'machine-learning';
+
+UPDATE courses SET
+  slug        = 'data-analysis',
+  title       = 'Data Analysis & Business Intelligence',
+  description = 'Data analytics with Python, SQL, Power BI, statistics and visualization.'
+WHERE slug = 'data-analytics';
+
+-- ============================================
+-- SEED COURSES (INSERT IGNORE — safe to re-run)
 -- ============================================
 
 INSERT IGNORE INTO courses (title, slug, description, duration, level, is_published) VALUES
-('Machine Learning','machine-learning','Master ML including supervised and unsupervised learning, neural networks and deep learning.',2400,'intermediate',true),
+('Artificial Intelligence & Machine Learning','artificial-intelligence','Master AI including supervised and unsupervised learning, neural networks, deep learning, NLP, and Generative AI.',2880,'intermediate',true),
 ('Full Stack Java','full-stack-java','Spring Boot, Hibernate, REST APIs and modern Java development.',3000,'intermediate',true),
 ('Full Stack Python','full-stack-python','Django, Flask, REST APIs and full stack Python development.',2800,'beginner',true),
-('Data Analytics','data-analytics','Data analytics with Python, SQL, statistics and visualization.',2200,'beginner',true),
+('Data Analysis & Business Intelligence','data-analysis','Data analytics with Python, SQL, Power BI, statistics and visualization.',2200,'beginner',true),
 ('Cyber Security','cyber-security','Cybersecurity, penetration testing, network security and ethical hacking.',2600,'advanced',true),
 ('SAP','sap','Enterprise SAP ERP modules for business operations.',3200,'intermediate',true);
 
